@@ -7,26 +7,23 @@
   
         name: AD-Domain-Services
         state: present
+  tags:
+    - services
  
 - name: Setup AD Domain 
-- win_domain:
+  win_domain:
+    dns_domain_name: "{{ ad_domain_name }}"
+    safe_mode_password: "{{ ad_safe_mode_password }}"
+    register: active_directory_controllers
 
-        dns_domain_name: "{{ ad_domain_name }}"
-        safe_mode_password: "{{ ad_safe_mode_password }}"
-        register: active_directory_controllers
+- name: reboot once DC created
 
-#- name: Setup AD Controller
-# - win_domain_controller: 
-#
-#      dns_domain_name: "{{ ad_domain_name }}"
- #     domain_admin_user: "administrator"
-  #    domain_admin_password: "{{ansible_password}}"
-   #   safe_mode_password: "{{ ad_safe_mode_password }}"
-    #  state: domain_controller
-
- - name: reboot once DC created
-- win_reboot:
+  win_reboot:
       when: active_directory_controllers.reboot_required
 
- - debug: 
+- name: List DCs in domain
+  win_shell: "nltest /dclist:{{ ad_domain_name }}"
+  register: domain_list
+
+- debug:
        var: domain_list
